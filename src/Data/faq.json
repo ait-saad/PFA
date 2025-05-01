@@ -1,0 +1,27 @@
+[
+    {
+      "question": "Qu'est-ce que recrutement ?",
+      "answer": "recrutement  est une application de recherche d'emploi qui permet aux entreprises de publier des offres et aux utilisateurs de rechercher et postuler à des emplois. Elle propose des fonctionnalités à la fois pour les chercheurs d'emploi et les employeurs, avec des interfaces conviviales et une authentification sécurisée."
+    },
+    {
+      "question": "Comment publier une offre d'emploi ?",
+      "answer": "En tant qu'employeur, vous pouvez publier une offre d'emploi en accédant à la section 'Publier une offre' après vous être connecté. Remplissez les détails du poste et soumettez le formulaire pour créer une nouvelle annonce."
+    },
+    {
+      "question": "Comment puis-je rechercher des emplois ?",
+      "answer": "Les chercheurs d'emploi peuvent rechercher des postes par mots-clés, localisation, catégorie et autres filtres à l'aide de la barre de recherche sur la page d'accueil ou via la page dédiée à la recherche d'emploi."
+    },
+    {
+      "question": "Comment puis-je postuler à un emploi ?",
+      "answer": "Pour postuler à une offre, cliquez sur l’annonce correspondante et suivez les instructions de candidature. Vous devrez peut-être télécharger votre CV et fournir des informations complémentaires."
+    },
+    {
+      "question": "Puis-je enregistrer des offres pour y postuler plus tard ?",
+      "answer": "Oui, vous pouvez enregistrer des annonces en cliquant sur le bouton 'Enregistrer l’offre'. Les offres enregistrées sont accessibles depuis votre profil, dans la section 'Offres enregistrées'."
+    },
+    {
+      "question": "Comment suivre mes candidatures ?",
+      "answer": "Les chercheurs d'emploi peuvent suivre l'état de leurs candidatures depuis la section 'Candidatures' de leur profil. Cette section fournit des mises à jour sur l’avancement de chaque candidature."
+    }
+  ]
+  
