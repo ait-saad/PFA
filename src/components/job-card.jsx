@@ -55,6 +55,7 @@ const JobCard = ({
   }, [savedJob]);
 
   return (
+    
     <Card className="flex flex-col">
       {loadingDeleteJob && (
         <BarLoader className="mt-4" width={"100%"} color="#36d7b7" />
@@ -80,7 +81,7 @@ const JobCard = ({
           </div>
         </div>
         <hr />
-        {job.discreption.substring(0, job.discreption.indexOf("."))}.
+        {job.description.substring(0, job.description.indexOf("."))}.
       </CardContent>
       <CardFooter className="flex gap-2">
         <Link to={`/job/${job.id}`} className="flex-1">
