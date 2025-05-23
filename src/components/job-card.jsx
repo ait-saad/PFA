@@ -1,5 +1,11 @@
 /* eslint-disable react/prop-types */
-import { Star, MapPinIcon, Trash2Icon } from "lucide-react";
+import { deleteJob, saveJob } from "@/Api/apiJobs";
+import { useUser } from "@clerk/clerk-react";
+import { MapPinIcon, Star, Trash2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { BarLoader } from "react-spinners";
+import useFetch from '../Hooks/use_fetch.js';
 import { Button } from "./ui/button";
 import {
   Card,
@@ -8,12 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Link } from "react-router-dom";
-import { deleteJob, saveJob } from "@/Api/apiJobs";
-import { useUser } from "@clerk/clerk-react";
-import { useEffect, useState } from "react";
-import { BarLoader } from "react-spinners";
-import useFetch from '../Hooks/use_fetch.js';
     
 const JobCard = ({
   job,
@@ -54,6 +54,21 @@ const JobCard = ({
     if (savedJob !== undefined) setSaved(savedJob?.length > 0);
   }, [savedJob]);
 
+  // Fonction pour gérer la description de manière sécurisée
+  const getJobDescription = () => {
+    if (!job.description || typeof job.description !== 'string') {
+      return "No description available";
+    }
+    
+    const dotIndex = job.description.indexOf(".");
+    if (dotIndex === -1) {
+      // Pas de point trouvé, prendre les 100 premiers caractères
+      return job.description.substring(0, 100) + (job.description.length > 100 ? "..." : "");
+    }
+    
+    return job.description.substring(0, dotIndex) + ".";
+  };
+
   return (
     
     <Card className="flex flex-col">
@@ -62,7 +77,7 @@ const JobCard = ({
       )}
       <CardHeader className="flex">
         <CardTitle className="flex justify-between font-bold">
-          {job.title}
+          {job.title || "No title"}
           {isMyJob && (
             <Trash2Icon
               fill="red"
@@ -75,13 +90,15 @@ const JobCard = ({
       </CardHeader>
       <CardContent className="flex flex-col gap-4 flex-1">
         <div className="flex justify-between">
-          {job.company && <img src={job.company.logo_url} className="h-6" />}
+          {job.company && job.company.logo_url && (
+            <img src={job.company.logo_url} className="h-6" alt="Company logo" />
+          )}
           <div className="flex gap-2 items-center">
-            <MapPinIcon size={15} /> {job.location}
+            <MapPinIcon size={15} /> {job.location || "Location not specified"}
           </div>
         </div>
         <hr />
-        {job.description.substring(0, job.description.indexOf("."))}.
+        {getJobDescription()}
       </CardContent>
       <CardFooter className="flex gap-2">
         <Link to={`/job/${job.id}`} className="flex-1">

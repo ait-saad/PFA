@@ -1,8 +1,8 @@
 import { getCompanies } from "@/Api/apiCompanies";
 import { addNewJob } from "@/Api/apiJobs";
 import AddCompanyDrawer from "@/components/add-company-drawer";
+import AIJobDescriptionGenerator from "@/components/ai-job-description-generator";
 import { Button } from "@/components/ui/button";
-
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -40,9 +40,17 @@ const PostJob = () => {
     register,
     handleSubmit,
     control,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm({
-    defaultValues: { location: "", company_id: "", requirements: "" },
+    defaultValues: { 
+      location: "", 
+      company_id: "", 
+      requirements: "",
+      title: "",
+      description: "",
+    },
     resolver: zodResolver(schema),
   });
 
@@ -78,6 +86,11 @@ const PostJob = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
 
+  // Fonction pour gérer la description générée par l'AI - va dans le champ description
+  const handleDescriptionGenerated = (description) => {
+    setValue("description", description);  // Mettre dans description, pas requirements
+  };
+
   if (!isLoaded || loadingCompanies) {
     return <BarLoader className="mb-4" width={"100%"} color="#36d7b7" />;
   }
@@ -95,14 +108,33 @@ const PostJob = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-4 p-4 pb-0"
       >
+        {/* Job Title */}
         <Input placeholder="Job Title" {...register("title")} />
         {errors.title && <p className="text-red-500">{errors.title.message}</p>}
 
-        <Textarea placeholder="Job Description" {...register("description")} />
-        {errors.description && (
-          <p className="text-red-500">{errors.description.message}</p>
-        )}
+        {/* AI Assistant pour générer la description */}
+        <div className="mb-4">
+          <AIJobDescriptionGenerator 
+            onDescriptionGenerated={handleDescriptionGenerated}
+          />
+        </div>
 
+        {/* Job Description - Zone où la description AI apparaît */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Job Description</label>
+          <Textarea 
+            placeholder="Job Description will appear here after AI generation" 
+            {...register("description")}
+            value={watch("description")}
+            onChange={(e) => setValue("description", e.target.value)}
+            className="min-h-[150px]"
+          />
+          {errors.description && (
+            <p className="text-red-500">{errors.description.message}</p>
+          )}
+        </div>
+
+        {/* Location et Company */}
         <div className="flex gap-4 items-center">
           <Controller
             name="location"
@@ -158,23 +190,39 @@ const PostJob = () => {
           <p className="text-red-500">{errors.company_id.message}</p>
         )}
 
-        <Controller
-          name="requirements"
-          control={control}
-          render={({ field }) => (
-            <MDEditor value={field.value} onChange={field.onChange} />
+        {/* Requirements - Séparé de la description */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Additional Requirements & Skills</label>
+          <Controller
+            name="requirements"
+            control={control}
+            render={({ field }) => (
+              <MDEditor 
+                value={field.value} 
+                onChange={field.onChange}
+                preview="edit"
+                height={200}
+                placeholder="Add specific requirements, skills, and qualifications..."
+              />
+            )}
+          />
+          {errors.requirements && (
+            <p className="text-red-500">{errors.requirements.message}</p>
           )}
-        />
-        {errors.requirements && (
-          <p className="text-red-500">{errors.requirements.message}</p>
-        )}
+        </div>
+
+        {/* Error Messages */}
         {errors.errorCreateJob && (
           <p className="text-red-500">{errors?.errorCreateJob?.message}</p>
         )}
         {errorCreateJob?.message && (
           <p className="text-red-500">{errorCreateJob?.message}</p>
         )}
+
+        {/* Loading */}
         {loadingCreateJob && <BarLoader width={"100%"} color="#36d7b7" />}
+
+        {/* Submit Button */}
         <Button type="submit" variant="blue" size="lg" className="mt-2">
           Submit
         </Button>
