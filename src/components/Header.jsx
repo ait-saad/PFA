@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
 import {
+  SignIn,
   SignedIn,
   SignedOut,
   UserButton,
-  SignIn,
   useUser,
 } from "@clerk/clerk-react";
+import { Brain, BriefcaseBusiness, Heart, PenBox } from "lucide-react"; // ✅ Ajouter Brain ici
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "./ui/button";
-import { BriefcaseBusiness, Heart, PenBox } from "lucide-react";
 
 const Header = () => {
   const [showSignIn, setShowSignIn] = useState(false);
-
   const [search, setSearch] = useSearchParams();
   const { user } = useUser();
 
@@ -43,13 +42,22 @@ const Header = () => {
             </Button>
           </SignedOut>
           <SignedIn>
+            {/* Ajouter le lien SkillMatch */}
+            <Link to="/skillmatch">
+              <Button variant="outline" className="hidden sm:flex">
+                <Brain size={20} className="mr-2" />
+                SkillMatch AI
+              </Button>
+            </Link>
+
             {user?.unsafeMetadata?.role === "recruiter" && (
               <Link to="/post-job">
                 <Button variant="destructive" className="rounded-full">
                   <PenBox size={20} className="mr-2" />
                   Post a Job
                 </Button>
-              </Link>)}
+              </Link>
+            )}
            
             <UserButton
               appearance={{

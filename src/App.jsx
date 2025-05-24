@@ -11,6 +11,7 @@ import Onboarding from "./Pages/Onboarding";
 import PostJob from "./Pages/PostJob";
 import SaveJobs from "./Pages/saved-jobs";
 import SetupCompany from "./Pages/SetupCompany";
+import SkillMatch from "./Pages/SkillMatch";
 const router = createBrowserRouter([
   { 
     path: "/",
@@ -68,11 +69,21 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "/setup-company",
         element: (
           <ProtectedRoute>
             <SetupCompany />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "/skillmatch",
+        element: (
+          <ProtectedRoute>
+            <SkillMatch />
           </ProtectedRoute>
         ),
       },
