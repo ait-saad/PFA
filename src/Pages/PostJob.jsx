@@ -1,6 +1,6 @@
 import { getCompanies } from "@/Api/apiCompanies";
 import { addNewJob } from "@/Api/apiJobs";
-import AddCompanyDrawer from "@/components/add-company-drawer";
+import useFetch from "@/Hooks/use_fetch";
 import AIJobDescriptionGenerator from "@/components/ai-job-description-generator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import useFetch from "@/Hooks/use_fetch";
 import { useUser } from "@clerk/clerk-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import MDEditor from "@uiw/react-md-editor";
 import { State } from "country-state-city";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 import { BarLoader } from "react-spinners";
@@ -28,13 +27,20 @@ const schema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
   description: z.string().min(1, { message: "Description is required" }),
   location: z.string().min(1, { message: "Select a location" }),
-  company_id: z.string().min(1, { message: "Select or Add a new Company" }),
   requirements: z.string().min(1, { message: "Requirements are required" }),
 });
 
 const PostJob = () => {
   const { user, isLoaded } = useUser();
   const navigate = useNavigate();
+  const [aiGeneratedTitle, setAiGeneratedTitle] = useState(false);
+  const [aiGeneratedDescription, setAiGeneratedDescription] = useState(false);
+  const [aiGeneratedRequirements, setAiGeneratedRequirements] = useState(false);
+  
+  // Refs pour tracker les valeurs générées par IA
+  const aiTitleValue = useRef("");
+  const aiDescriptionValue = useRef("");
+  const aiRequirementsValue = useRef("");
 
   const {
     register,
@@ -46,7 +52,6 @@ const PostJob = () => {
   } = useForm({
     defaultValues: { 
       location: "", 
-      company_id: "", 
       requirements: "",
       title: "",
       description: "",
@@ -65,6 +70,7 @@ const PostJob = () => {
     fnCreateJob({
       ...data,
       recruiter_id: user.id,
+      company_id: user.unsafeMetadata?.company_id,
       isOpen: true,
     });
   };
@@ -83,13 +89,30 @@ const PostJob = () => {
     if (isLoaded) {
       fnCompanies();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
 
-  // Fonction pour gérer la description générée par l'AI - va dans le champ description
-  const handleDescriptionGenerated = (description) => {
-    setValue("description", description);  // Mettre dans description, pas requirements
+  // Fonction pour gérer les 3 éléments générés par l'IA
+  const handleDescriptionGenerated = (generatedContent) => {
+    // L'IA génère maintenant 3 choses : title, description, requirements
+    setValue("title", generatedContent.title);
+    setValue("description", generatedContent.description);
+    setValue("requirements", generatedContent.requirements);
+    
+    // Stocker les valeurs IA
+    aiTitleValue.current = generatedContent.title;
+    aiDescriptionValue.current = generatedContent.description;
+    aiRequirementsValue.current = generatedContent.requirements;
+    
+    // Marquer tous comme générés par IA
+    setAiGeneratedTitle(true);
+    setAiGeneratedDescription(true);
+    setAiGeneratedRequirements(true);
   };
+
+  // Vérifier si les valeurs actuelles sont celles générées par IA
+  const isTitleFromAI = aiGeneratedTitle && watch("title") === aiTitleValue.current;
+  const isDescriptionFromAI = aiGeneratedDescription && watch("description") === aiDescriptionValue.current;
+  const isRequirementsFromAI = aiGeneratedRequirements && watch("requirements") === aiRequirementsValue.current;
 
   if (!isLoaded || loadingCompanies) {
     return <BarLoader className="mb-4" width={"100%"} color="#36d7b7" />;
@@ -97,6 +120,10 @@ const PostJob = () => {
 
   if (user?.unsafeMetadata?.role !== "recruiter") {
     return <Navigate to="/jobs" />;
+  }
+
+  if (!user?.unsafeMetadata?.company_id) {
+    return <Navigate to="/setup-company" />;
   }
 
   return (
@@ -108,29 +135,42 @@ const PostJob = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-4 p-4 pb-0"
       >
-        {/* Job Title */}
-        <Input placeholder="Job Title" {...register("title")} />
-        {errors.title && <p className="text-red-500">{errors.title.message}</p>}
-
-        {/* AI Assistant pour générer la description */}
+        {/* AI Assistant EN PREMIER */}
         <div className="mb-4">
           <AIJobDescriptionGenerator 
             onDescriptionGenerated={handleDescriptionGenerated}
           />
         </div>
 
-        {/* Job Description - Zone où la description AI apparaît */}
+        {/* Job Title */}
         <div>
-          <label className="block text-sm font-medium mb-2">Job Description</label>
-          <Textarea 
-            placeholder="Job Description will appear here after AI generation" 
+          <label className="block text-sm font-medium mb-1">Titre du Poste</label>
+          <Input 
+            placeholder="Saisissez le titre du poste ou utilisez l'IA ci-dessus" 
+            {...register("title")} 
+            value={watch("title")}
+            onChange={(e) => setValue("title", e.target.value)}
+            className={isTitleFromAI ? "bg-green-50 border-green-300 dark:bg-green-900/20" : ""}
+          />
+          {errors.title && <p className="text-red-500">{errors.title.message}</p>}
+          {isTitleFromAI && (
+            <p className="text-sm text-green-600 mt-1">✅ Rempli par l'IA (modifiable)</p>
+          )}
+        </div>
+
+        {/* Job Description */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Description du Poste</label>
+          <Textarea
+            placeholder="Brève description du poste ou utilisez l'IA ci-dessus"
             {...register("description")}
             value={watch("description")}
             onChange={(e) => setValue("description", e.target.value)}
-            className="min-h-[150px]"
+            className={`min-h-[120px] ${isDescriptionFromAI ? "bg-green-50 border-green-300 dark:bg-green-900/20" : ""}`}
           />
-          {errors.description && (
-            <p className="text-red-500">{errors.description.message}</p>
+          {errors.description && <p className="text-red-500">{errors.description.message}</p>}
+          {isDescriptionFromAI && (
+            <p className="text-sm text-green-600 mt-1">✅ Rempli par l'IA (modifiable)</p>
           )}
         </div>
 
@@ -156,43 +196,22 @@ const PostJob = () => {
               </Select>
             )}
           />
-          <Controller
-            name="company_id"
-            control={control}
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Company">
-                    {field.value
-                      ? companies?.find((com) => com.id === Number(field.value))
-                          ?.name
-                      : "Company"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {companies?.map(({ name, id }) => (
-                      <SelectItem key={name} value={id}>
-                        {name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            )}
-          />
-          <AddCompanyDrawer fetchCompanies={fnCompanies} />
+          
+          <div className="flex-1 p-2 border rounded-md bg-muted">
+            <span className="text-sm text-muted-foreground">Entreprise :</span>
+            <p className="font-medium">
+              {companies?.find(c => c.id === user?.unsafeMetadata?.company_id)?.name || "Chargement..."}
+            </p>
+          </div>
         </div>
+        
         {errors.location && (
           <p className="text-red-500">{errors.location.message}</p>
         )}
-        {errors.company_id && (
-          <p className="text-red-500">{errors.company_id.message}</p>
-        )}
 
-        {/* Requirements - Séparé de la description */}
+        {/* Requirements */}
         <div>
-          <label className="block text-sm font-medium mb-2">Additional Requirements & Skills</label>
+          <label className="block text-sm font-medium mb-2">Exigences et Compétences Requises</label>
           <Controller
             name="requirements"
             control={control}
@@ -201,20 +220,21 @@ const PostJob = () => {
                 value={field.value} 
                 onChange={field.onChange}
                 preview="edit"
-                height={200}
-                placeholder="Add specific requirements, skills, and qualifications..."
+                height={250}
+                placeholder="Exigences détaillées, compétences et qualifications..."
+                className={isRequirementsFromAI ? "border-green-300" : ""}
               />
             )}
           />
           {errors.requirements && (
             <p className="text-red-500">{errors.requirements.message}</p>
           )}
+          {isRequirementsFromAI && (
+            <p className="text-sm text-green-600 mt-1">✅ Rempli par l'IA (modifiable)</p>
+          )}
         </div>
 
         {/* Error Messages */}
-        {errors.errorCreateJob && (
-          <p className="text-red-500">{errors?.errorCreateJob?.message}</p>
-        )}
         {errorCreateJob?.message && (
           <p className="text-red-500">{errorCreateJob?.message}</p>
         )}
@@ -223,9 +243,30 @@ const PostJob = () => {
         {loadingCreateJob && <BarLoader width={"100%"} color="#36d7b7" />}
 
         {/* Submit Button */}
-        <Button type="submit" variant="blue" size="lg" className="mt-2">
+        <Button 
+          type="submit" 
+          variant="blue" 
+          size="lg" 
+          className="mt-2"
+          disabled={loadingCreateJob}
+        >
           Submit
         </Button>
+
+        {/* Indication de ce qui vient de l'IA */}
+        {(isTitleFromAI || isDescriptionFromAI || isRequirementsFromAI) && (
+          <div className="text-center">
+            <p className="text-sm text-blue-600">
+              💡 Contenu généré par l'IA : {
+                [
+                  isTitleFromAI && "Titre",
+                  isDescriptionFromAI && "Description", 
+                  isRequirementsFromAI && "Exigences"
+                ].filter(Boolean).join(", ")
+              }
+            </p>
+          </div>
+        )}
       </form>
     </div>
   );

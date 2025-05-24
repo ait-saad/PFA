@@ -1,9 +1,3 @@
-import { useEffect } from "react";
-import { BarLoader } from "react-spinners";
-import MDEditor from "@uiw/react-md-editor";
-import { useParams } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
-import { Briefcase, DoorClosed, DoorOpen, MapPinIcon } from "lucide-react";
 import { getSingleJob, updateHiringStatus } from '@/Api/apiJobs.js';
 import {
   Select,
@@ -12,9 +6,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ApplyJobDrawer from "../components/apply-job";
+import { useUser } from "@clerk/clerk-react";
+import MDEditor from "@uiw/react-md-editor";
+import { Briefcase, DoorClosed, DoorOpen, MapPinIcon } from "lucide-react";
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { BarLoader } from "react-spinners";
 import useFetch from '../Hooks/use_fetch.js';
 import ApplicationCard from "../components/application-card";
+import ApplyJobDrawer from "../components/apply-job";
 
 const JobPage = () => {
   const { id } = useParams();
@@ -103,14 +103,30 @@ const JobPage = () => {
         </Select>
       )}
 
-      <h2 className="text-2xl sm:text-3xl font-bold">About the job</h2>
-      <p className="sm:text-lg">{job?.description}</p>
+<div className="space-y-6">
+  <div>
+    <h2 className="text-2xl font-bold mb-4 text-blue-500">Description du poste</h2>
+    <div className="bg-card border rounded-lg p-6">
+      <div className="prose prose-lg max-w-none dark:prose-invert">
+        {job?.description?.split('\n').map((paragraph, index) => (
+          <p key={index} className="mb-3 text-gray-700 dark:text-gray-300 leading-relaxed">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </div>
+  </div>
 
-      <h2 className="text-2xl sm:text-3xl font-bold">What we are looking for</h2>
+  <div>
+    <h2 className="text-2xl font-bold mb-4 text-green-500">Exigences et Compétences</h2>
+    <div className="bg-card border rounded-lg p-6">
       <MDEditor.Markdown
         source={job?.requirements}
-        className="bg-transparent sm:text-lg"
+        className="bg-transparent prose prose-lg max-w-none dark:prose-invert"
       />
+    </div>
+  </div>
+</div>
 
       {/* Candidate-only Apply button */}
       {job?.recruiter_id !== user?.id && (

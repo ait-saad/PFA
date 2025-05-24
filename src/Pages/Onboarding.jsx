@@ -1,7 +1,7 @@
-import { useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { BarLoader } from "react-spinners";
 
 const Onboarding = () => {
@@ -13,15 +13,29 @@ const Onboarding = () => {
   };
 
   const handleRoleSelection = async (role) => {
-    await user
-      .update({ unsafeMetadata: { role } })
-      .then(() => {
-        console.log(`Role updated to: ${role}`);
-        navigateUser(role);
-      })
-      .catch((err) => {
-        console.error("Error updating role:", err);
-      });
+    if (role === "recruiter") {
+      // Rediriger vers une page de sélection/création de compagnie
+      await user
+        .update({ unsafeMetadata: { role } })
+        .then(() => {
+          console.log(`Role updated to: ${role}`);
+          navigate("/setup-company"); // Nouvelle route
+        })
+        .catch((err) => {
+          console.error("Error updating role:", err);
+        });
+    } else {
+      // Pour les candidats, process normal
+      await user
+        .update({ unsafeMetadata: { role } })
+        .then(() => {
+          console.log(`Role updated to: ${role}`);
+          navigate("/jobs");
+        })
+        .catch((err) => {
+          console.error("Error updating role:", err);
+        });
+    }
   };
 
   useEffect(() => {

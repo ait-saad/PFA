@@ -16,39 +16,37 @@ app.post('/api/generate-job-description', async (req, res) => {
   try {
     const { title, requirements, companyInfo } = req.body;
    
-    // Prompt amélioré pour un texte plus organisé et professionnel
-    const prompt = `You are a professional HR specialist. Create a clean, well-structured job description for a "${title}" position.
+    // Prompt modifié pour générer une description courte en français
+    const prompt = `Tu es un spécialiste RH professionnel. Crée une offre d'emploi complète pour un poste de "${title}".
 
-Requirements to include: ${requirements}
+Exigences à inclure : ${requirements}
+${companyInfo ? `Contexte de l'entreprise : ${companyInfo}` : ''}
 
-${companyInfo ? `Company context: ${companyInfo}` : ''}
+Génère le contenu dans cette structure EXACTE avec des séparateurs clairs :
 
-Please format the response with clear sections using this structure:
+===TITLE===
+${title}
 
-## Job Overview
-[Write a brief, engaging introduction about the role and its importance]
+===DESCRIPTION===
+[Écris UNIQUEMENT un aperçu du poste en 2-3 phrases maximum qui décrit brièvement ce que l'entreprise recherche et l'objectif principal du rôle. Commence par "Nous recherchons..." ou "Nous sommes à la recherche...". Reste concis et professionnel en français.]
 
-## Key Responsibilities
-- [List 4-5 main responsibilities using bullet points]
-- [Focus on what the person will actually do day-to-day]
-- [Use action verbs and be specific]
+===REQUIREMENTS===
+## Qualifications Requises
+- [Liste des compétences et expériences essentielles en français]
+- [Inclure les exigences de formation si pertinent]
+- [Mentionner les années d'expérience nécessaires]
 
-## Required Qualifications
-- [List essential skills and experience]
-- [Include education requirements if relevant]
-- [Mention years of experience needed]
+## Compétences Souhaitées
+- [Liste des compétences optionnelles en français]
+- [Technologies ou certifications supplémentaires]
 
-## Preferred Skills
-- [List nice-to-have skills]
-- [Additional technologies or certifications]
+## Ce Que Nous Offrons
+- Package salarial compétitif
+- Opportunités de développement professionnel
+- Arrangements de travail flexibles
+- Avantages santé et bien-être
 
-## What We Offer
-- Competitive salary package
-- Professional development opportunities
-- Flexible working arrangements
-- Health and wellness benefits
-
-Keep the language professional, clear, and engaging. Avoid special characters, excessive formatting, or overly complex sentences. Use simple bullet points with hyphens (-) only.`;
+IMPORTANT : Tout doit être en FRANÇAIS. La section DESCRIPTION doit faire exactement 2-3 phrases maximum, comme un paragraphe d'aperçu du poste. Ne pas inclure de responsabilités détaillées dans cette section.`;
 
     // Appel API Azure DeepSeek
     const response = await fetch('https://DeepSeek-R1-gADK.eastus.models.ai.azure.com/v1/chat/completions?api-version=2024-06-01-preview', {
@@ -62,14 +60,14 @@ Keep the language professional, clear, and engaging. Avoid special characters, e
         messages: [
           {
             role: "system",
-            content: "You are an expert HR professional who creates clear, well-structured job descriptions. Always use clean formatting with simple markdown headers (##) and bullet points (-). Avoid special characters, emojis, or complex formatting."
+            content: "Tu es un expert RH qui crée des descriptions de poste claires et bien structurées en français. Utilise toujours le format exact demandé avec les séparateurs ===TITLE===, ===DESCRIPTION===, et ===REQUIREMENTS===. La section DESCRIPTION doit être très courte (2-3 phrases maximum)."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        max_tokens: 1000,
+        max_tokens: 1200,
         temperature: 0.6,
         top_p: 0.9
       })
@@ -83,22 +81,46 @@ Keep the language professional, clear, and engaging. Avoid special characters, e
 
     const data = await response.json();
     
-    // Nettoyer le texte généré
+    // Récupérer et parser le contenu généré
     let generatedText = data.choices[0].message.content.trim();
     
-    // Supprimer les caractères indésirables et normaliser
-    generatedText = generatedText
-      .replace(/[""'']/g, '"')  // Remplacer les guillemets fantaisistes
-      .replace(/[–—]/g, '-')    // Remplacer les tirets fantaisistes
-      .replace(/•/g, '-')       // Remplacer les puces par des tirets
-      .replace(/\*\*/g, '')     // Supprimer le markdown bold (**) 
-      .replace(/\*([^*]+)\*/g, '$1') // Supprimer les italiques simples
-      .replace(/^\s*[\*\-\+]\s*/gm, '- ') // Normaliser les listes
-      .replace(/\n{3,}/g, '\n\n') // Réduire les espaces multiples
+    // Séparer le contenu en 3 parties
+    const titleMatch = generatedText.match(/===TITLE===(.*?)===DESCRIPTION===/s);
+    const descriptionMatch = generatedText.match(/===DESCRIPTION===(.*?)===REQUIREMENTS===/s);
+    const requirementsMatch = generatedText.match(/===REQUIREMENTS===(.*?)$/s);
+    
+    const cleanedTitle = titleMatch ? titleMatch[1].trim() : title;
+    let cleanedDescription = descriptionMatch ? descriptionMatch[1].trim() : 'Description générée par IA';
+    const cleanedRequirements = requirementsMatch ? requirementsMatch[1].trim() : 'Exigences générées par IA';
+    
+    // Nettoyer et limiter la description
+    const cleanText = (text) => text
+      .replace(/[""'']/g, '"')
+      .replace(/[–—]/g, '-')
+      .replace(/•/g, '-')
+      .replace(/\*\*/g, '')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/^\s*[\*\-\+]\s*/gm, '- ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    
+    // Limiter la description à 3 phrases maximum
+    cleanedDescription = cleanText(cleanedDescription);
+    const sentences = cleanedDescription.split(/[.!?]+/);
+    if (sentences.length > 3) {
+      cleanedDescription = sentences.slice(0, 3).join('.').trim() + '.';
+    }
+    
+    // Supprimer les crochets et textes d'instruction s'ils sont restés
+    cleanedDescription = cleanedDescription
+      .replace(/\[.*?\]/g, '')
+      .replace(/^\s*-\s*/gm, '')
       .trim();
     
     res.json({
-      description: generatedText
+      title: cleanText(cleanedTitle),
+      description: cleanedDescription,
+      requirements: cleanText(cleanedRequirements)
     });
   } catch (error) {
     console.error('Error generating job description:', error);

@@ -10,6 +10,7 @@ import MyJobs from "./Pages/MyJobs";
 import Onboarding from "./Pages/Onboarding";
 import PostJob from "./Pages/PostJob";
 import SaveJobs from "./Pages/saved-jobs";
+import SetupCompany from "./Pages/SetupCompany";
 const router = createBrowserRouter([
   { 
     path: "/",
@@ -64,6 +65,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <JobPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/setup-company",
+        element: (
+          <ProtectedRoute>
+            <SetupCompany />
           </ProtectedRoute>
         ),
       },
