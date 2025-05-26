@@ -19,6 +19,27 @@ export const generateJobDescription = async (jobData) => {
     throw error;
   }
 };
+
+// Nouvelle fonction pour analyse complète du CV
+export const analyzeCVComplete = async (formData) => {
+  try {
+    const response = await fetch('http://localhost:3001/api/analyze-cv-complete', {
+      method: 'POST',
+      body: formData, // FormData avec le fichier PDF
+    });
+    
+    if (!response.ok) {
+      throw new Error('Erreur lors de l\'analyse complète du CV');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error analyzing CV complete:", error);
+    throw error;
+  }
+};
+
+// Ancienne fonction maintenue pour compatibilité
 export const analyzeAndStoreCV = async (formData) => {
   try {
     const response = await fetch('http://localhost:3001/api/analyze-and-store-cv', {
@@ -69,6 +90,23 @@ export const searchCandidatesAdvanced = async (criteria) => {
     return await response.json();
   } catch (error) {
     console.error("Error searching candidates:", error);
+    throw error;
+  }
+};
+
+// Récupérer tous les CV stockés
+export const getStoredCVs = async () => {
+  try {
+    const response = await fetch('http://localhost:3001/api/stored-cvs', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching stored CVs:", error);
     throw error;
   }
 };
