@@ -1,11 +1,7 @@
-import { Button } from '@/components/ui/button';
-import React from 'react';
-import { Link } from 'react-router-dom';
-import companies from '../Data/companies.json';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Autoplay from 'embla-carousel-autoplay';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from 'react-router-dom';
 import faqs from '../Data/faq.json';
 const LandingPage = () => {
   return (
@@ -31,27 +27,7 @@ const LandingPage = () => {
           <Button variant="secondary" size="xl">Trouver un candidat</Button>
         </Link>
       </div>
-      <Carousel
-        
-        plugins={[
-          Autoplay({
-            delay: 2000,
-          }),
-        ]}
-        className="w-full py-10"
-      >
-        <CarouselContent className="flex gap-5 sm:gap-20 items-center">
-          {companies.map(({ name, id, path }) => (
-            <CarouselItem key={id} className="basis-1/3 lg:basis-1/6 ">
-              <img
-                src={path}
-                alt={name}
-                className="h-9 sm:h-14 object-contain"
-              />
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-      </Carousel>
+      
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
   <Card>
     <CardHeader>
